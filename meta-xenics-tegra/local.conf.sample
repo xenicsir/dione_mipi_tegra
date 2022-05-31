@@ -1,0 +1,28 @@
+MACHINE ??= "jetson-nano-2gb-devkit"
+
+DL_DIR ?= "${TOPDIR}/downloads"
+SSTATE_DIR ?= "${TOPDIR}/sstate-cache"
+TMPDIR = "${TOPDIR}/tmp"
+DISTRO ?= "poky"
+PACKAGE_CLASSES ?= "package_deb"
+EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
+
+DISTRO_FEATURES = "x11 opengl wayland"
+include conf/machine/${MACHINE}-extra.conf
+
+USER_CLASSES ?= "buildstats image-mklibs image-prelink"
+IMAGE_CLASSES += "image_types_tegra"
+IMAGE_FSTYPES = "tegraflash"
+PATCHRESOLVE = "noop"
+BB_DISKMON_DIRS ??= "\
+    STOPTASKS,${TMPDIR},1G,100K \
+    STOPTASKS,${DL_DIR},1G,100K \
+    STOPTASKS,${SSTATE_DIR},1G,100K \
+    STOPTASKS,/tmp,100M,100K \
+    ABORT,${TMPDIR},100M,1K \
+    ABORT,${DL_DIR},100M,1K \
+    ABORT,${SSTATE_DIR},100M,1K \
+    ABORT,/tmp,10M,1K"
+PACKAGECONFIG_append_pn-qemu-system-native = " sdl"
+
+CONF_VERSION = "1"
