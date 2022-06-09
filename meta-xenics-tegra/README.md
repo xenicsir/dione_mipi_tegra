@@ -17,7 +17,7 @@ Prepare additional layers:
 ```sh
 $ cd ../
 $ git clone git://git.openembedded.org/meta-openembedded -b dunfell
-$ tar -vxf ../meta-xenics-tegra.tar.gz meta-xenics-tegra
+$ git clone git://github.com/xenicsir/dione_mipi_tegra.git
 $ cp meta-xenics-tegra/local.conf.sample build/conf/local.conf
 $ cd build
 ```
