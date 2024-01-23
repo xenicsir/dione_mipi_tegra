@@ -24,7 +24,7 @@ Prepare additional layers:
 $ cd ../
 $ git clone git://git.openembedded.org/meta-openembedded -b dunfell
 $ git clone https://github.com/xenicsir/dione_mipi_tegra.git
-$ cp yocto/dunfell/meta-xenics-tegra/local.conf.sample build/conf/local.conf
+$ cp yocto/dunfell/meta/local.conf.sample build/conf/local.conf
 $ cd build
 ```
 
@@ -49,7 +49,7 @@ Add the required layers:
 ```sh
 $ bitbake-layers add-layer ../meta-tegra/
 $ bitbake-layers add-layer ../meta-openembedded/meta-oe/
-$ bitbake-layers add-layer ../yocto/dunfell/meta-xenics-tegra/meta/
+$ bitbake-layers add-layer ../yocto/dunfell/meta/meta/
 $ bitbake-layers add-layer ../meta-openembedded/meta-python/
 $ bitbake-layers add-layer ../meta-openembedded/meta-networking/
 ```

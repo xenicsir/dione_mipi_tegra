@@ -14,12 +14,12 @@ sed '/0003-Update-allocator-to-use-actual-frame-sizes.patch/ s/^/#/' -i meta-teg
 
 source poky-${BRANCH}/oe-init-build-env build
 
-cp ../dione_mipi_tegra/yocto/kirkstone/meta-xenics-tegra/local.conf.sample conf/local.conf
+cp ../dione_mipi_tegra/yocto/kirkstone/meta/local.conf.sample conf/local.conf
 
 bitbake-layers add-layer ../meta-tegra/
 bitbake-layers add-layer ../meta-openembedded/meta-oe/
 bitbake-layers add-layer ../meta-openembedded/meta-python/
 bitbake-layers add-layer ../meta-openembedded/meta-networking/
-bitbake-layers add-layer ../dione_mipi_tegra/yocto/kirkstone/meta-xenics-tegra/meta/
+bitbake-layers add-layer ../dione_mipi_tegra/yocto/kirkstone/meta/meta/
 
 bitbake core-image-weston
