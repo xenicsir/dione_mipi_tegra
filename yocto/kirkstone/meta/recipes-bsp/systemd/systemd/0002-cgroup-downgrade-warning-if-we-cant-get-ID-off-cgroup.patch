@@ -1,0 +1,35 @@
+diff -Naur a/src/core/cgroup.c b/src/core/cgroup.c
+--- a/src/core/cgroup.c	2022-03-11 08:33:33.000000000 +0100
++++ b/src/core/cgroup.c	2022-06-13 21:07:58.786300879 +0200
+@@ -2140,7 +2140,6 @@
+         bool created, is_root_slice;
+         CGroupMask migrate_mask = 0;
+         _cleanup_free_ char *cgroup_full_path = NULL;
+-        uint64_t cgroup_id = 0;
+         int r;
+ 
+         assert(u);
+@@ -2160,11 +2159,14 @@
+         created = r;
+ 
+         if (cg_unified_controller(SYSTEMD_CGROUP_CONTROLLER) > 0) {
++        	uint64_t cgroup_id = 0;
++
+                 r = cg_get_path(SYSTEMD_CGROUP_CONTROLLER, u->cgroup_path, NULL, &cgroup_full_path);
+                 if (r == 0) {
+                         r = cg_path_get_cgroupid(cgroup_full_path, &cgroup_id);
+                         if (r < 0)
+-                                log_unit_warning_errno(u, r, "Failed to get cgroup ID on cgroup %s, ignoring: %m", cgroup_full_path);
++                                log_unit_full_errno(u, ERRNO_IS_NOT_SUPPORTED(r) ? LOG_DEBUG : LOG_WARNING, r,
++                                                    "Failed to get cgroup ID of cgroup %s, ignoring: %m", cgroup_full_path);
+                 } else
+                         log_unit_warning_errno(u, r, "Failed to get full cgroup path on cgroup %s, ignoring: %m", empty_to_root(u->cgroup_path));
+ 
+@@ -2175,7 +2177,6 @@
+         (void) unit_watch_cgroup(u);
+         (void) unit_watch_cgroup_memory(u);
+ 
+-
+         /* For v2 we preserve enabled controllers in delegated units, adjust others,
+          * for v1 we figure out which controller hierarchies need migration. */
+         if (created || !u->cgroup_realized || !unit_cgroup_delegate(u)) {

@@ -1,0 +1,53 @@
+# 5.1, 6.1, 7.1 supported
+export L4T_VER="${L4T_VER:-6.1}"
+
+# git clone https://github.com/OE4T/linux-tegra-4.9.git -b oe4t-patches-l4t-r32.7
+# export CUSTOM_KERNEL_PATH=<path to custom kernel>
+
+export TOOLCHAIN_FILE="gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz"
+export DRV_FILE="jetson-210_linux_r32.${L4T_VER}_aarch64.tbz2"
+export SRC_FILE="${L4T_VER}_public_sources.tbz2"
+#export ROOTFS_FILE="tegra_linux_sample-root-filesystem_r32.${L4T_VER}_aarch64.tbz2"
+
+export TOOLCHAIN_LINK="http://releases.linaro.org/components/toolchain/binaries/7.3-2018.05/aarch64-linux-gnu/$TOOLCHAIN_FILE"
+
+if [ $L4T_VER == "5.1" ]; then
+    LINK_EXTRA="r32_release_v${L4T_VER}/"
+else
+    LINK_EXTRA=
+fi
+
+export DRV_LINK="https://developer.nvidia.com/embedded/l4t/r32_release_v${L4T_VER}/${LINK_EXTRA}t210/$DRV_FILE"
+export SRC_LINK="https://developer.nvidia.com/embedded/l4t/r32_release_v${L4T_VER}/${LINK_EXTRA}sources/t210/public_sources.tbz2"
+export ROOTFS_LINK="https://developer.nvidia.com/embedded/l4t/r32_release_v${L4T_VER}/${LINK_EXTRA}t210/$ROOTFS_FILE"
+
+export BUILD_HOME="$(cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd -P)"
+export DL_DIR="$BUILD_HOME/downloads"
+export CROSS_COMPILE_HOME="$BUILD_HOME/l4t-gcc"
+export TEGRA_HOME="$BUILD_HOME/Linux_for_Tegra"
+export ROOTFS_HOME="$TEGRA_HOME/rootfs"
+
+export KERNEL_PATCHES="$BUILD_HOME/kernel_patches"
+
+if [ -n "$CUSTOM_KERNEL_PATH" ]; then
+    export TEGRA_KERNEL_HOME="$CUSTOM_KERNEL_PATH"
+    export TEGRA_KERNEL_HW_HOME="$TEGRA_KERNEL_HOME"
+    export TEGRA_KERNEL_NV_HOME="$TEGRA_KERNEL_HOME"
+else
+    # stock kernel by nvidia
+    export TEGRA_KERNEL_HOME="$TEGRA_HOME/source/public/kernel/kernel-4.9"
+    export TEGRA_KERNEL_HW_HOME="$TEGRA_KERNEL_HOME/../../hardware"
+    export TEGRA_KERNEL_NV_HOME="$TEGRA_KERNEL_HOME/.."
+fi
+
+export TEGRA_KERNEL_OUT="${TEGRA_KERNEL_OUT:-$BUILD_HOME/kernel_build}"
+
+export CROSS_COMPILE="$CROSS_COMPILE_HOME/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-"
+export LOCALVERSION=-tegra
+
+export DRIVER_SRC_DIR="$BUILD_HOME/driver_src"
+export PACKAGES_DIR="$BUILD_HOME/packages"
+
+export SSH_ADDRESS="${SSH_ADDRESS:-nanouser@nanohost.local}"
+export SERIAL_DEVICE="${SERIAL_DEVICE:-/dev/ttyUSB0}"
+export ROOTFS_MOUNT_PATH="${ROOTFS_MOUNT_PATH:-/media/<youruser>/<mountpoint>}"

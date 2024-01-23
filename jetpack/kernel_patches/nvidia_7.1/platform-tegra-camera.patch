@@ -1,0 +1,413 @@
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/capture_common.c b/nvidia/drivers/media/platform/tegra/camera/capture_common.c
+--- a/nvidia/drivers/media/platform/tegra/camera/capture_common.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/capture_common.c	2023-09-13 14:34:54.045658593 +0200
+@@ -1,7 +1,7 @@
+ /*
+  * Tegra capture common operations
+  *
+- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
++ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Author: Sudhir Vyas <svyas@nvidia.com>
+  *         Ziqi Qing <zqing@nvidia.com>
+@@ -96,6 +96,9 @@
+ 	struct hlist_node *next;
+ 	struct capture_mapping *pin;
+ 
++	if (unlikely(tab == NULL))
++		return;
++
+ 	write_lock(&tab->hlock);
+ 
+ 	hash_for_each_safe(tab->hhead, bkt, next, pin, hnode) {
+@@ -184,6 +187,11 @@
+ 	struct dma_buf *buf;
+ 	void *err;
+ 
++	if (unlikely(tab == NULL)) {
++		pr_err("%s: invalid buffer table\n", __func__);
++		return ERR_PTR(-EINVAL);
++	}
++
+ 	buf = dma_buf_get((int)fd);
+ 	if (IS_ERR(buf)) {
+ 		dev_err(tab->dev, fmt("invalid memfd %u; errno %ld"),
+@@ -273,6 +281,11 @@
+ 	bool add = (bool)(flag & BUFFER_ADD);
+ 	int err = 0;
+ 
++	if (unlikely(tab == NULL)) {
++		pr_err("%s: invalid buffer table\n", __func__);
++		return -EINVAL;
++	}
++
+ 	mutex_lock(&req_lock);
+ 
+ 	if (add) {
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/csi/csi.c b/nvidia/drivers/media/platform/tegra/camera/csi/csi.c
+--- a/nvidia/drivers/media/platform/tegra/camera/csi/csi.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/csi/csi.c	2023-09-13 14:34:54.045658593 +0200
+@@ -1,7 +1,7 @@
+ /*
+  * NVIDIA Tegra CSI Device
+  *
+- * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
++ * Copyright (c) 2015-2022, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Author: Bryan Wu <pengw@nvidia.com>
+  *
+@@ -481,8 +481,14 @@
+ 		MEDIA_BUS_FMT_RGB888_1X32_PADHI,
+ 		V4L2_FIELD_NONE,
+ 		V4L2_COLORSPACE_SRGB
+-	}
+-
++	},
++	{
++		TEGRA_DEF_WIDTH,
++		TEGRA_DEF_HEIGHT,
++		MEDIA_BUS_FMT_UYVY8_1X16,
++		V4L2_FIELD_NONE,
++		V4L2_COLORSPACE_SRGB
++	},
+ };
+ 
+ static struct v4l2_frmsize_discrete tegra_csi_tpg_sizes[] = {
+@@ -716,6 +722,17 @@
+ 	return 0;
+ }
+ 
++static int tegra_csi_enum_mbus_code(struct v4l2_subdev *sd,
++				struct v4l2_subdev_pad_config *cfg,
++				struct v4l2_subdev_mbus_code_enum *code)
++{
++	if (code->index >= ARRAY_SIZE(tegra_csi_tpg_fmts))
++		return -EINVAL;
++
++	code->code = tegra_csi_tpg_fmts[code->index].code;
++	return 0;
++}
++
+ /* -----------------------------------------------------------------------------
+  * V4L2 Subdevice Operations
+  */
+@@ -728,6 +745,7 @@
+ static struct v4l2_subdev_pad_ops tegra_csi_pad_ops = {
+ 	.get_fmt	= tegra_csi_get_format,
+ 	.set_fmt	= tegra_csi_set_format,
++	.enum_mbus_code = tegra_csi_enum_mbus_code,
+ 	.enum_frame_size = tegra_csi_enum_framesizes,
+ 	.enum_frame_interval = tegra_csi_enum_frameintervals,
+ };
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/isp/capture_isp.c b/nvidia/drivers/media/platform/tegra/camera/isp/capture_isp.c
+--- a/nvidia/drivers/media/platform/tegra/camera/isp/capture_isp.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/isp/capture_isp.c	2023-09-13 14:34:54.045658593 +0200
+@@ -3,7 +3,7 @@
+  *
+  * Tegra NvCapture ISP KMD
+  *
+- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
++ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Author: Sudhir Vyas <svyas@nvidia.com>
+  *
+@@ -850,6 +850,7 @@
+ 			&capture->progress_status_notifier);
+ 
+ 	destroy_buffer_table(capture->buffer_ctx);
++	capture->buffer_ctx = NULL;
+ 
+ 	capture->channel_id = CAPTURE_CHANNEL_ISP_INVALID_ID;
+ 
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/isp/isp_channel.c b/nvidia/drivers/media/platform/tegra/camera/isp/isp_channel.c
+--- a/nvidia/drivers/media/platform/tegra/camera/isp/isp_channel.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/isp/isp_channel.c	2023-09-13 14:34:54.045658593 +0200
+@@ -1,7 +1,7 @@
+ /*
+  * ISP channel driver for T186
+  *
+- * Copyright (c) 2017-2021 NVIDIA Corporation.  All rights reserved.
++ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Author: Sudhir Vyas <svyas@nvidia.com>
+  *
+@@ -77,6 +77,11 @@
+ 	void __user *ptr = (void __user *)arg;
+ 	long err = -EFAULT;
+ 
++	if (unlikely(chan == NULL)) {
++		pr_err("%s: invalid channel\n", __func__);
++		return -EINVAL;
++	}
++
+ 	switch (_IOC_NR(cmd)) {
+ 	case _IOC_NR(ISP_CAPTURE_SETUP): {
+ 		struct isp_capture_setup setup;
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/vi/capture.c b/nvidia/drivers/media/platform/tegra/camera/vi/capture.c
+--- a/nvidia/drivers/media/platform/tegra/camera/vi/capture.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/vi/capture.c	2023-09-13 14:34:54.045658593 +0200
+@@ -3,7 +3,7 @@
+  *
+  * Tegra Graphics Host VI
+  *
+- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
++ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Author: David Wang <davidw@nvidia.com>
+  *
+@@ -205,8 +205,10 @@
+ 		}
+ 
+ 		capture_common_unpin_memory(&capture->requests);
+-		if (capture->buf_ctx != NULL)
++		if (capture->buf_ctx != NULL) {
+ 			destroy_buffer_table(capture->buf_ctx);
++			capture->buf_ctx = NULL;
++		}
+ 
+ 		vfree(capture->unpins_list);
+ 		capture->unpins_list = NULL;
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/vi/capture_vi_channel.c b/nvidia/drivers/media/platform/tegra/camera/vi/capture_vi_channel.c
+--- a/nvidia/drivers/media/platform/tegra/camera/vi/capture_vi_channel.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/vi/capture_vi_channel.c	2023-09-13 14:34:54.045658593 +0200
+@@ -1,7 +1,7 @@
+ /*
+  * VI channel driver for T186/T194
+  *
+- * Copyright (c) 2017-2020 NVIDIA Corporation.  All rights reserved.
++ * Copyright (c) 2017-2022 NVIDIA Corporation.  All rights reserved.
+  *
+  * Author: Sudhir Vyas <svyas@nvidia.com>
+  *
+@@ -148,6 +148,11 @@
+ 			return -EINVAL;
+ 		}
+ 
++		if (capture->buf_ctx) {
++			dev_err(chan->dev, "vi buffer setup already done");
++			return -EFAULT;
++		}
++
+ 		capture->buf_ctx = create_buffer_table(chan->dev);
+ 		if (capture->buf_ctx == NULL) {
+ 			dev_err(chan->dev, "vi buffer setup failed");
+@@ -160,6 +165,7 @@
+ 		if (err < 0) {
+ 			dev_err(chan->dev, "%s: memory setup failed\n", __func__);
+ 			destroy_buffer_table(capture->buf_ctx);
++			capture->buf_ctx = NULL;
+ 			return -EFAULT;
+ 		}
+ 
+@@ -171,6 +177,7 @@
+ 				__func__);
+ 			capture_common_unpin_memory(&capture->requests);
+ 			destroy_buffer_table(capture->buf_ctx);
++			capture->buf_ctx = NULL;
+ 			return -ENOMEM;
+ 		}
+ 
+@@ -180,6 +187,7 @@
+ 			dev_err(chan->dev, "vi capture setup failed\n");
+ 			capture_common_unpin_memory(&capture->requests);
+ 			destroy_buffer_table(capture->buf_ctx);
++			capture->buf_ctx = NULL;
+ 			return err;
+ 		}
+ 		break;
+@@ -219,6 +227,7 @@
+ 			vfree(capture->unpins_list);
+ 			capture->unpins_list = NULL;
+ 			destroy_buffer_table(capture->buf_ctx);
++			capture->buf_ctx = NULL;
+ 		}
+ 		break;
+ 	}
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/vi/channel.c b/nvidia/drivers/media/platform/tegra/camera/vi/channel.c
+--- a/nvidia/drivers/media/platform/tegra/camera/vi/channel.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/vi/channel.c	2023-09-13 14:34:54.045658593 +0200
+@@ -1,7 +1,7 @@
+ /*
+  * NVIDIA Tegra Video Input Device
+  *
+- * Copyright (c) 2015-2021, NVIDIA CORPORATION.  All rights reserved.
++ * Copyright (c) 2015-2022, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Author: Bryan Wu <pengw@nvidia.com>
+  *
+@@ -54,6 +54,21 @@
+ 
+ static s64 queue_init_ts;
+ 
++static bool tegra_channel_verify_focuser(struct tegra_channel *chan)
++{
++	char *str;
++
++	/*
++	 * WAR - to avoid power on/off during open/close for sensor
++	 * nodes but not focuser nodes.
++	 * add an array when more focusers are available, this logic is
++	 * not needed once the focuser is bound to sensor channel
++	 */
++	str = strnstr(chan->video->name, "lc898212", sizeof(chan->video->name));
++
++	return (str != NULL);
++}
++
+ static void gang_buffer_offsets(struct tegra_channel *chan)
+ {
+ 	int i;
+@@ -936,6 +951,15 @@
+ 	int err = 0;
+ 	struct v4l2_subdev *sd;
+ 
++	/* First power on and last power off will turn on/off the subdevices */
++	if (on) {
++		if (atomic_add_return(1, &chan->power_on_refcnt) != 1)
++			return 0;
++	} else {
++		if (!atomic_dec_and_test(&chan->power_on_refcnt))
++			return 0;
++	}
++
+ 	/* Power on CSI at the last to complete calibration of mipi lanes */
+ 	for (num_sd = chan->num_subdevs - 1; num_sd >= 0; num_sd--) {
+ 		sd = chan->subdev[num_sd];
+@@ -954,8 +978,16 @@
+ 	struct tegra_channel *chan = vb2_get_drv_priv(vq);
+ 	struct tegra_mc_vi *vi = chan->vi;
+ 
+-	if (vi->fops)
++	if (vi->fops) {
++		int ret = 0;
++
++		/* power on hw at the start of streaming */
++		ret = vi->fops->vi_power_on(chan);
++		if (ret < 0)
++			return ret;
++
+ 		return vi->fops->vi_start_streaming(vq, count);
++	}
+ 	return 0;
+ }
+ 
+@@ -964,8 +996,10 @@
+ 	struct tegra_channel *chan = vb2_get_drv_priv(vq);
+ 	struct tegra_mc_vi *vi = chan->vi;
+ 
+-	if (vi->fops)
++	if (vi->fops) {
+ 		vi->fops->vi_stop_streaming(vq);
++		vi->fops->vi_power_off(chan);
++	}
+ 
+ 	/* Clean-up recorded videobuf2 queue initial timestamp */
+ 	queue_init_ts = 0;
+@@ -2149,14 +2183,14 @@
+ 	vi = chan->vi;
+ 	csi = vi->csi;
+ 
+-	/* The first open then turn on power */
+-	if (vi->fops) {
+-		ret = vi->fops->vi_power_on(chan);
++	chan->fh = (struct v4l2_fh *)fp->private_data;
++
++	if (tegra_channel_verify_focuser(chan)) {
++		ret = tegra_channel_set_power(chan, true);
+ 		if (ret < 0)
+-			goto fail;
++			return ret;
+ 	}
+ 
+-	chan->fh = (struct v4l2_fh *)fp->private_data;
+ 
+ 	mutex_unlock(&chan->video_lock);
+ 	return 0;
+@@ -2184,7 +2218,12 @@
+ 		mutex_unlock(&chan->video_lock);
+ 		return ret;
+ 	}
+-	vi->fops->vi_power_off(chan);
++
++	if (tegra_channel_verify_focuser(chan)) {
++		ret = tegra_channel_set_power(chan, false);
++		if (ret < 0)
++			dev_err(vi->dev, "Failed to power off subdevices\n");
++	}
+ 
+ 	mutex_unlock(&chan->video_lock);
+ 	return ret;
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/vi/vi2_fops.c b/nvidia/drivers/media/platform/tegra/camera/vi/vi2_fops.c
+--- a/nvidia/drivers/media/platform/tegra/camera/vi/vi2_fops.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/vi/vi2_fops.c	2023-09-13 14:34:54.045658593 +0200
+@@ -1061,10 +1061,7 @@
+ 			tegra_vi->sensor_opened = true;
+ 	}
+ 
+-	if ((atomic_add_return(1, &chan->power_on_refcnt) == 1))
+-		ret = tegra_channel_set_power(chan, 1);
+-
+-	return ret;
++	return tegra_channel_set_power(chan, true);
+ }
+ 
+ static void vi2_power_off(struct tegra_channel *chan)
+@@ -1078,11 +1075,9 @@
+ 	tegra_vi = vi->vi;
+ 	csi = vi->csi;
+ 
+-	if (atomic_dec_and_test(&chan->power_on_refcnt)) {
+-		ret = tegra_channel_set_power(chan, 0);
+-		if (ret < 0)
+-			dev_err(vi->dev, "Failed to power off subdevices\n");
+-	}
++	ret = tegra_channel_set_power(chan, false);
++	if (ret < 0)
++		dev_err(vi->dev, "Failed to power off subdevices\n");
+ 
+ 	/* The last release then turn off power */
+ 	if (atomic_dec_and_test(&vi->power_on_refcnt)) {
+diff -Naur a/nvidia/drivers/media/platform/tegra/camera/vi/vi4_fops.c b/nvidia/drivers/media/platform/tegra/camera/vi/vi4_fops.c
+--- a/nvidia/drivers/media/platform/tegra/camera/vi/vi4_fops.c	2022-02-16 07:20:27.000000000 +0100
++++ b/nvidia/drivers/media/platform/tegra/camera/vi/vi4_fops.c	2023-09-13 14:34:54.045658593 +0200
+@@ -1,7 +1,7 @@
+ /*
+  * Tegra Video Input 4 device common APIs
+  *
+- * Copyright (c) 2016-2020, NVIDIA CORPORATION.  All rights reserved.
++ * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Author: Frank Chen <frank@nvidia.com>
+  *
+@@ -1255,12 +1255,10 @@
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	if (atomic_add_return(1, &chan->power_on_refcnt) == 1) {
+-		ret = tegra_channel_set_power(chan, 1);
+-		if (ret < 0) {
+-			dev_err(vi->dev, "Failed to power on subdevices\n");
+-			return ret;
+-		}
++	ret = tegra_channel_set_power(chan, true);
++	if (ret < 0) {
++		dev_err(vi->dev, "Failed to power on subdevices\n");
++		return ret;
+ 	}
+ 
+ 	return 0;
+@@ -1275,11 +1273,9 @@
+ 	vi = chan->vi;
+ 	csi = vi->csi;
+ 
+-	if (atomic_dec_and_test(&chan->power_on_refcnt)) {
+-		ret = tegra_channel_set_power(chan, 0);
+-		if (ret < 0)
+-			dev_err(vi->dev, "Failed to power off subdevices\n");
+-	}
++	ret = tegra_channel_set_power(chan, 0);
++	if (ret < 0)
++		dev_err(vi->dev, "Failed to power off subdevices\n");
+ 
+ 	tegra_vi4_power_off(vi);
+ 	nvhost_module_remove_client(vi->ndev, chan->video);

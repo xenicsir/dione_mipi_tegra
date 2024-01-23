@@ -1,0 +1,37 @@
+diff -Naur a/nvidia/platform/t210/porg/kernel-dts/porg-platforms/tegra210-porg-camera.dtsi b/nvidia/platform/t210/porg/kernel-dts/porg-platforms/tegra210-porg-camera.dtsi
+--- a/nvidia/platform/t210/porg/kernel-dts/porg-platforms/tegra210-porg-camera.dtsi	2023-09-08 17:21:34.940802149 +0200
++++ b/nvidia/platform/t210/porg/kernel-dts/porg-platforms/tegra210-porg-camera.dtsi	2023-09-07 19:35:06.742644414 +0200
+@@ -14,8 +14,8 @@
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
+-#include "tegra210-porg-camera-rbpcv2-dual-imx219.dtsi"
+-#include "tegra210-porg-camera-rbpcv2-imx219.dtsi"
++#include "tegra210-porg-camera-xenics-dual-dione-ir.dtsi"
++#include "tegra210-porg-camera-xenics-dione-ir.dtsi"
+ 
+ / {
+ 	tegra-camera-platform {
+diff -Naur a/nvidia/platform/t210/porg/kernel-dts/tegra210-porg-p3448-common.dtsi b/nvidia/platform/t210/porg/kernel-dts/tegra210-porg-p3448-common.dtsi
+--- a/nvidia/platform/t210/porg/kernel-dts/tegra210-porg-p3448-common.dtsi	2023-09-08 17:21:34.944802227 +0200
++++ b/nvidia/platform/t210/porg/kernel-dts/tegra210-porg-p3448-common.dtsi	2023-09-28 18:09:00.242289286 +0200
+@@ -28,8 +28,8 @@
+ #include "porg-platforms/tegra210-pinmux-drive-sdmmc-common.dtsi"
+ #include "porg-platforms/tegra210-porg-pwm-fan.dtsi"
+ #include "porg-platforms/tegra210-porg-camera.dtsi"
+-#include "porg-platforms/tegra210-porg-camera-rbpcv2-imx219.dtsi"
+-#include "porg-platforms/tegra210-porg-camera-rbpcv2-dual-imx219.dtsi"
++#include "porg-platforms/tegra210-porg-camera-xenics-dione-ir.dtsi"
++#include "porg-platforms/tegra210-porg-camera-xenics-dual-dione-ir.dtsi"
+ #include <t210-common-platforms/tegra210-ers-hdmi-e2190-1100-a00.dtsi>
+ #include <t210-common-platforms/tegra210-dp.dtsi>
+ #include <t210-common-platforms/tegra210-thermal-userspace-alert.dtsi>
+@@ -41,7 +41,7 @@
+ #include "porg-platforms/tegra210-porg-cpufreq.dtsi"
+ #include "porg-platforms/tegra210-porg-powermon-p3448-0000-a00.dtsi"
+ #include "porg-plugin-manager/tegra210-porg-eeprom-manager.dtsi"
+-#include "porg-plugin-manager/tegra210-porg-plugin-manager.dtsi"
++#include "porg-plugin-manager/tegra210-porg-plugin-manager-xenics-dione-ir.dtsi"
+ #include <tegra210-soc/mods-simple-bus.dtsi>
+ #include "porg-platforms/tegra210-porg-extcon-p3448-0000-a00.dtsi"
+ #include "porg-platforms/tegra210-porg-p3448-emc-a00.dtsi"
