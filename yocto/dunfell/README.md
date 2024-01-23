@@ -54,7 +54,7 @@ Add the required layers:
 ```sh
 $ bitbake-layers add-layer ../meta-tegra/
 $ bitbake-layers add-layer ../meta-openembedded/meta-oe/
-$ bitbake-layers add-layer ../yocto/dunfell/meta/meta/
+$ bitbake-layers add-layer ../yocto/dunfell/meta/
 $ bitbake-layers add-layer ../meta-openembedded/meta-python/
 $ bitbake-layers add-layer ../meta-openembedded/meta-networking/
 ```

@@ -20,6 +20,6 @@ bitbake-layers add-layer ../meta-tegra/
 bitbake-layers add-layer ../meta-openembedded/meta-oe/
 bitbake-layers add-layer ../meta-openembedded/meta-python/
 bitbake-layers add-layer ../meta-openembedded/meta-networking/
-bitbake-layers add-layer ../dione_mipi_tegra/yocto/kirkstone/meta/meta/
+bitbake-layers add-layer ../dione_mipi_tegra/yocto/kirkstone/meta/
 
 bitbake core-image-weston
