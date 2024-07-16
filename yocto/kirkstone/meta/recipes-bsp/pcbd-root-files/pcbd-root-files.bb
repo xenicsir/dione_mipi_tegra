@@ -6,6 +6,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/MIT;md5=0835ad
 SRC_URI = "file://etc/issue"
 SRC_URI += "file://home/root/README.txt"
 SRC_URI += "file://home/root/dione1280.py"
+SRC_URI += "file://home/root/config"
 SRC_URI += "file://etc/modules-load.d/g_serial.conf"
 
 do_install() {
